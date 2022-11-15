@@ -5,11 +5,14 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Observable, fromEvent, merge } from 'rxjs';
 
 import { ToastrService } from 'ngx-toastr';
+import { NgBrazilValidators } from 'ng-brazil';
+import { utilsBr } from 'js-brasil';
 
 import { ValidationMessages, GenericValidator, DisplayMessage } from 'src/app/utils/generic-form-validation';
 import { Fornecedor } from '../models/fornecedor';
-import { Endereco } from '../models/endereco';
+import { CepConsulta, Endereco } from '../models/endereco';
 import { FornecedorService } from '../services/fornecedor.service';
+import { StringUtils } from 'src/app/utils/string-utils';
 
 @Component({
   selector: 'app-editar',
@@ -32,10 +35,9 @@ export class EditarComponent implements OnInit {
   displayMessage: DisplayMessage = {};
   textoDocumento: string = '';
 
+  MASKS = utilsBr.MASKS;
   tipoFornecedor: number;
   formResult: string = '';
-
-  mudancasNaoSalvas: boolean;
 
   constructor(private fb: FormBuilder,
     private fornecedorService: FornecedorService,
@@ -48,7 +50,9 @@ export class EditarComponent implements OnInit {
         required: 'Informe o Nome',
       },
       documento: {
-        required: 'Informe o Documento'
+        required: 'Informe o Documento',
+        cpf: 'CPF em formato inválido',
+        cnpj: 'CNPJ em formato inválido'
       },
       logradouro: {
         required: 'Informe o Logradouro',
@@ -60,7 +64,8 @@ export class EditarComponent implements OnInit {
         required: 'Informe o Bairro',
       },
       cep: {
-        required: 'Informe o CEP'
+        required: 'Informe o CEP',
+        cep: 'CEP em formato inválido'
       },
       cidade: {
         required: 'Informe a Cidade',
@@ -72,12 +77,11 @@ export class EditarComponent implements OnInit {
 
     this.genericValidator = new GenericValidator(this.validationMessages);
 
-    this.fornecedorService.obterPorId(route.params['id'])
-      .subscribe(fornecedor => this.fornecedor = fornecedor);
+    this.fornecedor = this.route.snapshot.data['fornecedor'];
+    this.tipoFornecedor = this.fornecedor.tipoFornecedor;
   }
 
   ngOnInit() {
-
     this.fornecedorForm = this.fb.group({
       id: '',
       nome: ['', [Validators.required]],
@@ -86,26 +90,91 @@ export class EditarComponent implements OnInit {
       tipoFornecedor: ['', [Validators.required]]
     });
 
-    this.enderecoForm = this.fb.group({
-      id: '',
-      logradouro: ['', [Validators.required]],
-      numero: ['', [Validators.required]],
-      complemento: [''],
-      bairro: ['', [Validators.required]],
-      cep: ['', [Validators.required]],
-      cidade: ['', [Validators.required]],
-      estado: ['', [Validators.required]],
-      fornecedorId: ''
+    this.preencherForm();
+  }
+
+  preencherForm() {
+    this.fornecedorForm.patchValue({
+      id: this.fornecedor.id,
+      nome: this.fornecedor.nome,
+      ativo: this.fornecedor.ativo,
+      tipoFornecedor: this.fornecedor.tipoFornecedor.toString(),
+      documento: this.fornecedor.documento
     });
+
+    // Pessoa Física
+    if (this.tipoFornecedorForm().value === "1") {
+      this.documento().setValidators([Validators.required, NgBrazilValidators.cpf]);
+    }
+    else { // Pessoa Jurídica
+      this.documento().setValidators([Validators.required, NgBrazilValidators.cnpj]);
+    }
   }
 
   ngAfterViewInit() {
+    this.tipoFornecedorForm().valueChanges.subscribe(() => {
+      this.trocarValidacaoDocumento();
+      this.configurarElementosValidacao();
+      this.validarFormulario();
+    });
+
+    this.configurarElementosValidacao();
+  }
+
+  configurarElementosValidacao() {
     let controlBlurs: Observable<any>[] = this.formInputElements
       .map((formControl: ElementRef) => fromEvent(formControl.nativeElement, 'blur'));
 
     merge(...controlBlurs).subscribe(() => {
-      this.displayMessage = this.genericValidator.processarMensagens(this.fornecedorForm);
-      this.mudancasNaoSalvas = true;
+      this.validarFormulario();
+    });
+  }
+
+  validarFormulario() {
+    this.displayMessage = this.genericValidator.processarMensagens(this.fornecedorForm);
+  }
+
+  trocarValidacaoDocumento() {
+    // Pessoa Física
+    if (this.tipoFornecedorForm().value === '1') {
+      this.documento().clearValidators();
+      this.documento().setValidators([Validators.required, NgBrazilValidators.cpf]);
+      this.textoDocumento = "CPF (requerido)";
+    }
+    else { // Pessoa Jurídica
+      this.documento().clearValidators();
+      this.documento().setValidators([Validators.required, NgBrazilValidators.cnpj]);
+      this.textoDocumento = "CNPJ (requerido)";
+    }
+  }
+
+  tipoFornecedorForm(): AbstractControl {
+    return this.fornecedorForm.get('tipoFornecedor');
+  }
+
+  documento(): AbstractControl {
+    return this.fornecedorForm.get('documento');
+  }
+
+  buscarCep(cep: string) {
+    cep = StringUtils.somenteNumeros(cep);
+    if (cep.length < 8) return;
+
+    this.fornecedorService.consultarCep(cep)
+      .subscribe(
+        cepRetorno => this.preencherEnderecoConsulta(cepRetorno),
+        erro => this.errors.push(erro));
+  }
+
+  preencherEnderecoConsulta(cepConsulta: CepConsulta) {
+    this.fornecedorForm.patchValue({
+      endereco: {
+        logradouro: cepConsulta.logradouro,
+        bairro: cepConsulta.bairro,
+        cep: cepConsulta.cep,
+        cidade: cepConsulta.localidade,
+        estado: cepConsulta.uf,
+      }
     });
   }
 
@@ -113,14 +182,13 @@ export class EditarComponent implements OnInit {
     if (this.fornecedorForm.dirty && this.fornecedorForm.valid) {
 
       this.fornecedor = Object.assign({}, this.fornecedor, this.fornecedorForm.value);
+      this.fornecedor.documento = StringUtils.somenteNumeros(this.fornecedor.documento);
 
       this.fornecedorService.atualizarFornecedor(this.fornecedor)
         .subscribe(
           sucesso => { this.processarSucesso(sucesso) },
           falha => { this.processarFalha(falha) }
         );
-
-      this.mudancasNaoSalvas = false;
     }
   }
 
