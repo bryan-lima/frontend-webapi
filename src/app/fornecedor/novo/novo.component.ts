@@ -58,7 +58,8 @@ export class NovoComponent implements OnInit {
         required: 'Informe o Bairro',
       },
       cep: {
-        required: 'Informe o CEP'
+        required: 'Informe o CEP',
+        cep: 'CEP em formato inválido'
       },
       cidade: {
         required: 'Informe a Cidade',
@@ -83,7 +84,7 @@ export class NovoComponent implements OnInit {
         numero: ['', [Validators.required]],
         complemento: ['', [Validators.required]],
         bairro: ['', [Validators.required]],
-        cep: ['', [Validators.required]],
+        cep: ['', [Validators.required, NgBrazilValidators.cep]],
         cidade: ['', [Validators.required]],
         estado: ['', [Validators.required]]
       })
