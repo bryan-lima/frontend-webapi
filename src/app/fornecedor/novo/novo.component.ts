@@ -188,12 +188,8 @@ export class NovoComponent implements OnInit {
     this.fornecedorForm.reset();
     this.errors = [];
 
-    let toast = this.toastr.success('Fornecedor cadastrado com sucesso!', 'Sucesso!');
-    if (toast) {
-      toast.onHidden.subscribe(() => {
-        this.router.navigate(['/fornecedores/listar-todos']);
-      });
-    }
+    this.toastr.success('Fornecedor cadastrado com sucesso!', 'Sucesso!');
+    this.router.navigate(['/fornecedores/listar-todos']);
   }
 
   processarFalha(fail: any) {
