@@ -7,6 +7,7 @@ import { Observable, fromEvent, merge } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { NgBrazilValidators } from 'ng-brazil';
 import { utilsBr } from 'js-brasil';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { ValidationMessages, GenericValidator, DisplayMessage } from 'src/app/utils/generic-form-validation';
 import { Fornecedor } from '../models/fornecedor';
@@ -43,7 +44,8 @@ export class EditarComponent implements OnInit {
     private fornecedorService: FornecedorService,
     private router: Router,
     private toastr: ToastrService,
-    private route: ActivatedRoute) {
+    private route: ActivatedRoute,
+    private modalService: NgbModal) {
 
     this.validationMessages = {
       nome: {
@@ -90,6 +92,18 @@ export class EditarComponent implements OnInit {
       tipoFornecedor: ['', [Validators.required]]
     });
 
+    this.enderecoForm = this.fb.group({
+      id: '',
+      logradouro: ['', [Validators.required]],
+      numero: ['', [Validators.required]],
+      complemento: [''],
+      bairro: ['', [Validators.required]],
+      cep: ['', [Validators.required, NgBrazilValidators.cep]],
+      cidade: ['', [Validators.required]],
+      estado: ['', [Validators.required]],
+      fornecedorId: ''
+    });
+
     this.preencherForm();
   }
 
@@ -109,6 +123,17 @@ export class EditarComponent implements OnInit {
     else { // Pessoa Jurídica
       this.documento().setValidators([Validators.required, NgBrazilValidators.cnpj]);
     }
+
+    this.enderecoForm.patchValue({
+      id: this.fornecedor.endereco.id,
+      logradouro: this.fornecedor.endereco.logradouro,
+      numero: this.fornecedor.endereco.numero,
+      complemento: this.fornecedor.endereco.complemento,
+      bairro: this.fornecedor.endereco.bairro,
+      cep: this.fornecedor.endereco.cep,
+      cidade: this.fornecedor.endereco.cidade,
+      estado: this.fornecedor.endereco.estado
+    });
   }
 
   ngAfterViewInit() {
@@ -167,14 +192,12 @@ export class EditarComponent implements OnInit {
   }
 
   preencherEnderecoConsulta(cepConsulta: CepConsulta) {
-    this.fornecedorForm.patchValue({
-      endereco: {
-        logradouro: cepConsulta.logradouro,
-        bairro: cepConsulta.bairro,
-        cep: cepConsulta.cep,
-        cidade: cepConsulta.localidade,
-        estado: cepConsulta.uf,
-      }
+    this.enderecoForm.patchValue({
+      logradouro: cepConsulta.logradouro,
+      bairro: cepConsulta.bairro,
+      cep: cepConsulta.cep,
+      cidade: cepConsulta.localidade,
+      estado: cepConsulta.uf
     });
   }
 
@@ -195,16 +218,45 @@ export class EditarComponent implements OnInit {
   processarSucesso(response: any) {
     this.errors = [];
 
-    let toast = this.toastr.success('Fornecedor atualizado com sucesso!', 'Sucesso!');
-    if (toast) {
-      toast.onHidden.subscribe(() => {
-        this.router.navigate(['/fornecedores/listar-todos']);
-      });
-    }
+    this.toastr.success('Fornecedor atualizado com sucesso!', 'Sucesso!');
+    this.router.navigate(['/fornecedores/listar-todos']);
   }
 
   processarFalha(fail: any) {
     this.errors = fail.error.errors;
     this.toastr.error('Ocorreu um erro!', 'Opa :(');
+  }
+
+  editarEndereco() {
+    if (this.enderecoForm.dirty && this.enderecoForm.valid) {
+
+      this.endereco = Object.assign({}, this.endereco, this.enderecoForm.value);
+
+      this.endereco.cep = StringUtils.somenteNumeros(this.endereco.cep);
+      this.endereco.fornecedorId = this.fornecedor.id;
+
+      this.fornecedorService.atualizarEndereco(this.endereco)
+        .subscribe(
+          () => this.processarSucessoEndereco(this.endereco),
+          falha => { this.processarFalhaEndereco(falha) }
+        );
+    }
+  }
+
+  processarSucessoEndereco(endereco: Endereco) {
+    this.errors = [];
+
+    this.toastr.success('Endereço atualizado com sucesso!', 'Sucesso!');
+    this.fornecedor.endereco = endereco
+    this.modalService.dismissAll();
+  }
+
+  processarFalhaEndereco(fail: any) {
+    this.errorsEndereco = fail.error.errors;
+    this.toastr.error('Ocorreu um erro!', 'Opa :(');
+  }
+
+  abrirModal(content) {
+    this.modalService.open(content);
   }
 }
