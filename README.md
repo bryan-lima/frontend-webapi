@@ -1,4 +1,8 @@
-# FrontendWebapi
+# Frontend WebAPI
+
+Este projeto é um front-end para a aplicação backend "**WebAPI Core Completa**", que pode ser acessada no seguinte repositório: **[@bryan-lima/web-api-completa](https://github.com/bryan-lima/web-api-completa)**
+
+---
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.0.2.
 
