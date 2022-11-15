@@ -7,6 +7,9 @@ import { FornecedorAppComponent } from './fornecedor.app.component';
 import { ListaComponent } from './lista/lista.component';
 import { FornecedorService } from './services/fornecedor.service';
 
+import { NgBrazil } from 'ng-brazil';
+import { TextMaskModule } from 'angular2-text-mask';
+
 import { EditarComponent } from './editar/editar.component';
 import { ExcluirComponent } from './excluir/excluir.component';
 import { DetalhesComponent } from './detalhes/detalhes.component';
@@ -27,6 +30,8 @@ import { HttpClientModule } from '@angular/common/http';
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
+    NgBrazil,
+    TextMaskModule
   ],
   providers: [
     FornecedorService
