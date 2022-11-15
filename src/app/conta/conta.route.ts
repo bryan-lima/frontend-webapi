@@ -1,6 +1,6 @@
 import { NgModule } from "@angular/core";
 import { RouterModule, Routes } from "@angular/router";
-import { ContaGuard } from "../services/conta.guard";
+import { ContaGuard } from "./services/conta.guard";
 import { CadastroComponent } from "./cadastro/cadastro.component";
 import { ContaAppComponent } from "./conta.app.component";
 import { LoginComponent } from "./login/login.component";
