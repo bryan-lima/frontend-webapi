@@ -27,6 +27,7 @@ export class NovoComponent implements OnInit {
   validationMessages: ValidationMessages;
   genericValidator: GenericValidator;
   displayMessage: DisplayMessage = {};
+  textoDocumento: string = 'CPF (requerido)';
 
   MASKS = utilsBr.MASKS;
   formResult: string = '';
@@ -45,6 +46,7 @@ export class NovoComponent implements OnInit {
       documento: {
         required: 'Informe o Documento',
         cpf: 'CPF em formato inválido',
+        cnpj: 'CNPJ em formato inválido'
       },
       logradouro: {
         required: 'Informe o Logradouro',
@@ -94,13 +96,49 @@ export class NovoComponent implements OnInit {
   }
 
   ngAfterViewInit(): void {
+    this.tipoFornecedorForm().valueChanges.subscribe(() => {
+      this.trocarValidacaoDocumento();
+      this.configurarElementosValidacao();
+      this.validarFormulario();
+    });
+
+    this.configurarElementosValidacao();
+  }
+
+  configurarElementosValidacao() {
     let controlBlurs: Observable<any>[] = this.formInputElements
       .map((formControl: ElementRef) => fromEvent(formControl.nativeElement, 'blur'));
 
     merge(...controlBlurs).subscribe(() => {
-      this.displayMessage = this.genericValidator.processarMensagens(this.fornecedorForm);
-      this.mudancasNaoSalvas = true;
+      this.validarFormulario();
     });
+  }
+
+  validarFormulario() {
+    this.displayMessage = this.genericValidator.processarMensagens(this.fornecedorForm);
+    this.mudancasNaoSalvas = true;
+  }
+
+  trocarValidacaoDocumento() {
+    // Pessoa Física
+    if (this.tipoFornecedorForm().value === '1') {
+      this.documento().clearValidators();
+      this.documento().setValidators([Validators.required, NgBrazilValidators.cpf]);
+      this.textoDocumento = "CPF (requerido)";
+    }
+    else { // Pessoa Jurídica
+      this.documento().clearValidators();
+      this.documento().setValidators([Validators.required, NgBrazilValidators.cnpj]);
+      this.textoDocumento = "CNPJ (requerido)";
+    }
+  }
+
+  tipoFornecedorForm(): AbstractControl {
+    return this.fornecedorForm.get('tipoFornecedor');
+  }
+
+  documento(): AbstractControl {
+    return this.fornecedorForm.get('documento');
   }
 
    adicionarFornecedor() {
