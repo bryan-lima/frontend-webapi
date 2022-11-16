@@ -15,12 +15,13 @@ import { Fornecedor } from '../models/fornecedor';
 import { CepConsulta, Endereco } from '../models/endereco';
 import { FornecedorService } from '../services/fornecedor.service';
 import { StringUtils } from 'src/app/utils/string-utils';
+import { FormBaseComponent } from 'src/app/base-components/form-base.component';
 
 @Component({
   selector: 'app-editar',
   templateUrl: './editar.component.html'
 })
-export class EditarComponent implements OnInit {
+export class EditarComponent extends FormBaseComponent implements OnInit {
 
   @ViewChildren(FormControlName, { read: ElementRef }) formInputElements: ElementRef[];
 
@@ -32,14 +33,10 @@ export class EditarComponent implements OnInit {
   fornecedor: Fornecedor = new Fornecedor();
   endereco: Endereco = new Endereco();
 
-  validationMessages: ValidationMessages;
-  genericValidator: GenericValidator;
-  displayMessage: DisplayMessage = {};
   textoDocumento: string = '';
 
   MASKS = utilsBr.MASKS;
   tipoFornecedor: number;
-  formResult: string = '';
 
   constructor(private fb: FormBuilder,
     private fornecedorService: FornecedorService,
@@ -48,6 +45,8 @@ export class EditarComponent implements OnInit {
     private route: ActivatedRoute,
     private modalService: NgbModal,
     private spinner: NgxSpinnerService) {
+
+    super();
 
     this.validationMessages = {
       nome: {
@@ -79,7 +78,7 @@ export class EditarComponent implements OnInit {
       }
     };
 
-    this.genericValidator = new GenericValidator(this.validationMessages);
+    super.configurarMensagensValidacaoBase(this.validationMessages);
 
     this.fornecedor = this.route.snapshot.data['fornecedor'];
     this.tipoFornecedor = this.fornecedor.tipoFornecedor;
@@ -147,24 +146,11 @@ export class EditarComponent implements OnInit {
   ngAfterViewInit() {
     this.tipoFornecedorForm().valueChanges.subscribe(() => {
       this.trocarValidacaoDocumento();
-      this.configurarElementosValidacao();
-      this.validarFormulario();
+      super.configurarValidacaoFormularioBase(this.formInputElements, this.fornecedorForm);
+      super.validarFormulario(this.fornecedorForm);
     });
 
-    this.configurarElementosValidacao();
-  }
-
-  configurarElementosValidacao() {
-    let controlBlurs: Observable<any>[] = this.formInputElements
-      .map((formControl: ElementRef) => fromEvent(formControl.nativeElement, 'blur'));
-
-    merge(...controlBlurs).subscribe(() => {
-      this.validarFormulario();
-    });
-  }
-
-  validarFormulario() {
-    this.displayMessage = this.genericValidator.processarMensagens(this.fornecedorForm);
+    super.configurarValidacaoFormularioBase(this.formInputElements, this.fornecedorForm);
   }
 
   trocarValidacaoDocumento() {
