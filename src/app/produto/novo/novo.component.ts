@@ -12,6 +12,7 @@ import { ValidationMessages, GenericValidator, DisplayMessage } from 'src/app/ut
 
 import { Produto, Fornecedor } from '../models/produto';
 import { ProdutoService } from '../services/produto.service';
+import { CurrencyUtils } from 'src/app/utils/currency-utils';
 
 
 @Component({
@@ -106,7 +107,10 @@ export class NovoComponent implements OnInit {
   adicionarProduto() {
     if (this.produtoForm.dirty && this.produtoForm.valid) {
       this.produto = Object.assign({}, this.produto, this.produtoForm.value);
-      this.formResult = JSON.stringify(this.produto);
+
+      this.produto.imagemUpload = this.croppedImage.split(',')[1];
+      this.produto.imagem = this.imagemNome;
+      this.produto.valor = CurrencyUtils.StringParaDecimal(this.produto.valor);
 
       this.produtoService.novoProduto(this.produto)
         .subscribe(
@@ -122,12 +126,8 @@ export class NovoComponent implements OnInit {
     this.produtoForm.reset();
     this.errors = [];
 
-    let toast = this.toastr.success('Produto cadastrado com sucesso!', 'Sucesso!');
-    if (toast) {
-      toast.onHidden.subscribe(() => {
-        this.router.navigate(['/produtos/listar-todos']);
-      });
-    }
+    this.toastr.success('Produto cadastrado com sucesso!', 'Sucesso!');
+    this.router.navigate(['/produtos/listar-todos']);
   }
 
   processarFalha(fail: any) {

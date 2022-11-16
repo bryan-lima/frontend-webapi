@@ -33,12 +33,8 @@ export class ExcluirComponent  {
 
   public sucessoExclusao(evento: any) {
 
-    const toast = this.toastr.success('Produto excluido com Sucesso!', 'Good bye :D');
-    if (toast) {
-      toast.onHidden.subscribe(() => {
-        this.router.navigate(['/produtos/listar-todos']);
-      });
-    }
+    this.toastr.success('Produto excluido com Sucesso!', 'Good bye :D');
+    this.router.navigate(['/produtos/listar-todos']);
   }
 
   public falha() {

@@ -48,15 +48,15 @@
                   <label class="control-label">Imagem do Produto</label>
 
                   <div class="custom-file">
-                      <input type="file" class="custom-file-input" id="imagem" formControlName="imagem" (change)="fileChangeEvent($event)" [ngClass]="{'is-invalid': displayMessage.imagem }">
+                      <input type="file" accept="image/jpeg,image/png" class="custom-file-input" id="imagem" formControlName="imagem" (change)="fileChangeEvent($event)" [ngClass]="{'is-invalid': displayMessage.imagem }">
                       <label data-browse="Procurar" style="width: 400px" class="custom-file-label"></label>
-
+                      <span *ngIf="imagemNome"><br>{{ imagemNome }}<br></span>
                       <span class="text-danger" *ngIf="displayMessage.imagem">
                           <p [innerHTML]="displayMessage.imagem"></p>
                       </span>
                   </div>
 
-                  <div>
+                  <div *ngIf="imagemNome" class="row">
                     <div class="col col-md-6">
                       <image-cropper [imageChangedEvent]="imageChangedEvent" [maintainAspectRatio]="false" [containWithinAspectRatio]="containWithinAspectRatio" [aspectRatio]="4 / 3" [resizeToWidth]="256" [cropperMinWidth]="128" [onlyScaleDown]="true" [roundCropper]="false"
                           [canvasRotation]="canvasRotation" [transform]="transform" [alignImage]="'left'" [style.display]="showCropper ? null : 'none'" format="png" (imageCropped)="imageCropped($event)" (imageLoaded)="imageLoaded()" (cropperReady)="cropperReady($event)"
