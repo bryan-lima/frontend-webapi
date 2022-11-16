@@ -84,7 +84,7 @@ export class NovoComponent implements OnInit {
       endereco: this.fb.group({
         logradouro: ['', [Validators.required]],
         numero: ['', [Validators.required]],
-        complemento: ['', [Validators.required]],
+        complemento: [''],
         bairro: ['', [Validators.required]],
         cep: ['', [Validators.required, NgBrazilValidators.cep]],
         cidade: ['', [Validators.required]],
@@ -179,14 +179,14 @@ export class NovoComponent implements OnInit {
           sucesso => { this.processarSucesso(sucesso) },
           falha => { this.processarFalha(falha) }
         );
-
-      this.mudancasNaoSalvas = false;
     }
   }
 
   processarSucesso(response: any) {
     this.fornecedorForm.reset();
     this.errors = [];
+
+    this.mudancasNaoSalvas = false;
 
     this.toastr.success('Fornecedor cadastrado com sucesso!', 'Sucesso!');
     this.router.navigate(['/fornecedores/listar-todos']);
