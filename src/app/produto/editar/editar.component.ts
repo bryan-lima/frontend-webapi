@@ -11,12 +11,15 @@ import { ValidationMessages, GenericValidator, DisplayMessage } from 'src/app/ut
 
 import { Produto, Fornecedor } from '../models/produto';
 import { ProdutoService } from '../services/produto.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-editar',
   templateUrl: './editar.component.html'
 })
 export class EditarComponent implements OnInit {
+
+  imagens: string = environment.imagensUrl;
 
   @ViewChildren(FormControlName, { read: ElementRef }) formInputElements: ElementRef[];
 
