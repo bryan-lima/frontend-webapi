@@ -12,6 +12,7 @@ import { ValidationMessages, GenericValidator, DisplayMessage } from 'src/app/ut
 import { Produto, Fornecedor } from '../models/produto';
 import { ProdutoService } from '../services/produto.service';
 import { environment } from 'src/environments/environment';
+import { CurrencyUtils } from 'src/app/utils/currency-utils';
 
 @Component({
   selector: 'app-editar',
@@ -22,6 +23,11 @@ export class EditarComponent implements OnInit {
   imagens: string = environment.imagensUrl;
 
   @ViewChildren(FormControlName, { read: ElementRef }) formInputElements: ElementRef[];
+
+  imageBase64: any;
+  imagemPreview: any;
+  imagemNome: string;
+  imagemOriginalSrc: string;
 
   produto: Produto;
   fornecedores: Fornecedor[];
@@ -90,8 +96,11 @@ export class EditarComponent implements OnInit {
       nome: this.produto.nome,
       descricao: this.produto.descricao,
       ativo: this.produto.ativo,
-      valor: this.produto.valor
+      valor: CurrencyUtils.DecimalParaString(this.produto.valor)
     });
+
+    // Utilizar o [src] na imagem para evitar que se perca após POST
+    this.imagemOriginalSrc = this.imagens + "/" + this.produto.imagem;
   }
 
   ngAfterViewInit(): void {
@@ -108,6 +117,13 @@ export class EditarComponent implements OnInit {
     if (this.produtoForm.dirty && this.produtoForm.valid) {
       this.produto = Object.assign({}, this.produto, this.produtoForm.value);
 
+    if (this.imageBase64) {
+      this.produto.imagemUpload = this.imageBase64;
+      this.produto.imagem = this.imagemNome;
+    }
+
+    this.produto.valor = CurrencyUtils.StringParaDecimal(this.produto.valor);
+
      this.produtoService.atualizarProduto(this.produto)
         .subscribe(
           sucesso => { this.processarSucesso(sucesso) },
@@ -122,17 +138,26 @@ export class EditarComponent implements OnInit {
     this.produtoForm.reset();
     this.errors = [];
 
-    let toast = this.toastr.success('Produto editado com sucesso!', 'Sucesso!');
-    if (toast) {
-      toast.onHidden.subscribe(() => {
-        this.router.navigate(['/produtos/listar-todos']);
-      });
-    }
+    this.toastr.success('Produto editado com sucesso!', 'Sucesso!');
+    this.router.navigate(['/produtos/listar-todos']);
   }
 
   processarFalha(fail: any) {
     this.errors = fail.error.errors;
     this.toastr.error('Ocorreu um erro!', 'Opa :(');
   }
-}
 
+  upload(file: any) {
+    this.imagemNome = file[0].name;
+
+    var reader = new FileReader();
+    reader.onload = this.manipularReader.bind(this);
+    reader.readAsBinaryString(file[0]);
+  }
+
+  manipularReader(readerEvt: any) {
+    var binaryString = readerEvt.target.result;
+    this.imageBase64 = btoa(binaryString);
+    this.imagemPreview = "data:image/jpeg;base64," + this.imageBase64;
+  }
+}
